@@ -23,7 +23,7 @@ DB_USER=root
 DB_PASSWORD=your_mysql_password
 DB_NAME=payroll_db
 JWT_SECRET=change_this_secret
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:8080
 CURRENCY_API_KEY=your_freecurrencyapi_key
 CURRENCY_API_URL=https://api.freecurrencyapi.com/v1/latest
 ```
@@ -44,7 +44,7 @@ npm run dev
 npm start
 ```
 
-L’API s’exécute par défaut sur http://localhost:4000
+L’API s’exécute par défaut sur http://localhost:5000
 
 ## Endpoints
 - Authentification
@@ -75,12 +75,12 @@ L’API s’exécute par défaut sur http://localhost:4000
   - GET  /api/currency/convert?from=USD&to=XOF&amount=100
 
 ## Intégration Front
-Configurez le frontend pour cibler `http://localhost:4000` et utilisez le token JWT retourné par `/api/auth/login` pour les requêtes protégées (header `Authorization: Bearer <token>`).
+Configurez le frontend pour cibler `http://localhost:5000` et utilisez le token JWT retourné par `/api/auth/login` pour les requêtes protégées (header `Authorization: Bearer <token>`).
 
 ## Sécurité
 - Ne commitez jamais votre `.env` avec des secrets.
 - Le JWT expire après 7 jours par défaut.
-- CORS est autorisé pour `CORS_ORIGIN` (par défaut `http://localhost:5173`).
+- CORS est autorisé pour `CORS_ORIGIN` (par défaut `http://localhost:8080`).
 
 ## Notes
 - Les montants en CFA sont considérés en XOF.
