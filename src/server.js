@@ -3,9 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-
 const { testConnection } = require('./utils/db');
-
 const authRoutes = require('./routes/auth');
 const employeeRoutes = require('./routes/employees');
 const paymentRoutes = require('./routes/payments');
@@ -44,15 +42,26 @@ app.use((err, req, res, next) => {
 });
 
 // Démarrage serveur
-(async () => {
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
   try {
+    // Test de connexion DB
     await testConnection();
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
+    console.log('Database connection successful');
+    
+    // Démarrage du serveur
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`API running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });
   } catch (err) {
     console.error('Failed to start server:', err.message);
+    console.error('Full error:', err);
     process.exit(1);
   }
-})();
+};
+
+startServer();
+
+module.exports = app;
