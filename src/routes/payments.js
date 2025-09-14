@@ -94,8 +94,7 @@ router.post('/', authRequired, async (req, res, next) => {
             reference
           }
         );
-        const created = await query('SELECT * FROM payments WHERE id = :id', { id: result.insertId });
-        return res.status(201).json(created[0]);
+        return res.status(201).json({ id: result.insertId, ...req.body, reference });
       } catch (e) {
         if (e && e.code === 'ER_DUP_ENTRY') {
           attempts += 1;
@@ -105,8 +104,6 @@ router.post('/', authRequired, async (req, res, next) => {
       }
     }
     return res.status(409).json({ error: 'Could not generate unique payment reference, please retry' });
-    const created = await query('SELECT * FROM payments WHERE id = :id', { id: result.insertId });
-    res.status(201).json(created[0]);
   } catch (err) { next(err); }
 });
 
