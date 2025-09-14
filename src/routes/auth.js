@@ -1,9 +1,12 @@
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const { query } = require('../utils/db');
-const { generateToken, authRequired } = require('../middleware/auth');
+import { Router } from 'express';
+import bcryptPkg from 'bcryptjs';
+const { hash, compare } = bcryptPkg;
+import db from '../utils/db.js';
+const { query } = db;
+import _default from '../middleware/auth.js';
+const { generateToken, authRequired } = _default;
 
-const router = express.Router();
+const router = Router();
 
 router.post('/register', async (req, res, next) => {
   try {
@@ -12,29 +15,22 @@ router.post('/register', async (req, res, next) => {
       return res.status(400).json({ error: 'firstName, lastName, email and password are required' });
     }
 
-    const existing = await query('SELECT id FROM users WHERE email = :email', { email });
+    const existing = await query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length > 0) return res.status(409).json({ error: 'Email already registered' });
 
     let companyId = null;
     if (companyName) {
       const result = await query(
-        'INSERT INTO companies (name, address) VALUES (:name, :address)',
-        { name: companyName, address: companyAddress || '' }
+        'INSERT INTO companies (name, address) VALUES (?, ?)',
+        [companyName, companyAddress || '']
       );
       companyId = result.insertId;
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await hash(password, 10);
     const result = await query(
-      'INSERT INTO users (first_name, last_name, email, phone, password_hash, company_id) VALUES (:first_name, :last_name, :email, :phone, :password_hash, :company_id)',
-      {
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        phone: phone || null,
-        password_hash: passwordHash,
-        company_id: companyId
-      }
+      'INSERT INTO users (first_name, last_name, email, phone, password_hash, company_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [firstName, lastName, email, phone || null, passwordHash, companyId]
     );
 
     const userId = result.insertId;
@@ -54,11 +50,11 @@ router.post('/login', async (req, res, next) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
 
-    const users = await query('SELECT * FROM users WHERE email = :email', { email });
+    const users = await query('SELECT * FROM users WHERE email = ?', [email]);
     if (users.length === 0) return res.status(401).json({ error: 'Invalid credentials' });
 
     const user = users[0];
-    const ok = await bcrypt.compare(password, user.password_hash);
+    const ok = await compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ error: 'Invalid credentials' });
 
     const token = generateToken({ id: user.id, email: user.email });
@@ -73,12 +69,14 @@ router.post('/login', async (req, res, next) => {
         companyId: user.company_id
       }
     });
-  } catch (err) { next(err); }
+  } catch (err) { 
+    next(err); 
+  }
 });
 
 router.get('/me', authRequired, async (req, res, next) => {
   try {
-    const users = await query('SELECT id, first_name, last_name, email, phone, company_id FROM users WHERE id = :id', { id: req.user.id });
+    const users = await query('SELECT id, first_name, last_name, email, phone, company_id FROM users WHERE id = ?', [req.user.id]);
     if (users.length === 0) return res.status(404).json({ error: 'User not found' });
     const u = users[0];
     res.json({
@@ -89,18 +87,18 @@ router.get('/me', authRequired, async (req, res, next) => {
       phone: u.phone,
       companyId: u.company_id
     });
-  } catch (err) { next(err); }
+  } catch (err) { 
+    next(err); 
+  }
 });
-
-module.exports = router;
 
 // Route pour récupérer le profil utilisateur
 router.get('/profile', authRequired, async (req, res, next) => {
   try {
     const userId = req.user.id;
     const users = await query(
-      'SELECT id, first_name, last_name, email, phone, company_id FROM users WHERE id = :id',
-      { id: userId }
+      'SELECT id, first_name, last_name, email, phone, company_id FROM users WHERE id = ?',
+      [userId]
     );
     
     if (users.length === 0) {
@@ -133,8 +131,8 @@ router.put('/profile', authRequired, async (req, res, next) => {
     
     // Vérifier si l'email n'est pas déjà utilisé par un autre utilisateur
     const existing = await query(
-      'SELECT id FROM users WHERE email = :email AND id != :userId',
-      { email, userId }
+      'SELECT id FROM users WHERE email = ? AND id != ?',
+      [email, userId]
     );
     
     if (existing.length > 0) {
@@ -142,14 +140,8 @@ router.put('/profile', authRequired, async (req, res, next) => {
     }
     
     await query(
-      'UPDATE users SET first_name = :firstName, last_name = :lastName, email = :email, phone = :phone WHERE id = :userId',
-      {
-        firstName,
-        lastName,
-        email,
-        phone: phone || null,
-        userId
-      }
+      'UPDATE users SET first_name = ?, last_name = ?, email = ?, phone = ? WHERE id = ?',
+      [firstName, lastName, email, phone || null, userId]
     );
     
     res.json({
@@ -173,8 +165,8 @@ router.put('/password', authRequired, async (req, res, next) => {
     
     // Récupérer le mot de passe actuel
     const users = await query(
-      'SELECT password_hash FROM users WHERE id = :id',
-      { id: userId }
+      'SELECT password_hash FROM users WHERE id = ?',
+      [userId]
     );
     
     if (users.length === 0) {
@@ -182,21 +174,18 @@ router.put('/password', authRequired, async (req, res, next) => {
     }
     
     // Vérifier le mot de passe actuel
-    const isValidPassword = await bcrypt.compare(currentPassword, users[0].password_hash);
+    const isValidPassword = await compare(currentPassword, users[0].password_hash);
     if (!isValidPassword) {
       return res.status(400).json({ error: 'Current password is incorrect' });
     }
     
     // Hasher le nouveau mot de passe
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    const newPasswordHash = await hash(newPassword, 10);
     
     // Mettre à jour le mot de passe
     await query(
-      'UPDATE users SET password_hash = :passwordHash WHERE id = :userId',
-      {
-        passwordHash: newPasswordHash,
-        userId
-      }
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [newPasswordHash, userId]
     );
     
     res.json({ message: 'Password updated successfully' });
@@ -205,3 +194,4 @@ router.put('/password', authRequired, async (req, res, next) => {
   }
 });
 
+export default router;

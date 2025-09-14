@@ -1,8 +1,10 @@
-const express = require('express');
-const { query } = require('../utils/db');
-const { authRequired } = require('../middleware/auth');
+import { Router } from 'express';
+import db from '../utils/db.js';
+const { query } = db;
+import _default from '../middleware/auth.js';
+const { authRequired } = _default;
 
-const router = express.Router();
+const router = Router();
 
 router.get('/exchange-rate', authRequired, async (req, res, next) => {
   try {
@@ -25,4 +27,4 @@ router.put('/exchange-rate', authRequired, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-module.exports = router;
+export default router;

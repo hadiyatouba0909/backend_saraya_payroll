@@ -1,20 +1,18 @@
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '../.env') });
-const http = require('http');
-const app = require('./app');
-const { testConnection } = require('./utils/db');
-
+import { createServer } from 'http';
+import app from './app.js';
+import db from './utils/db.js';
 const PORT = process.env.PORT || 5000;
 
+// La configuration dotenv est gérée dans app.js
 (async () => {
-  try {
-    await testConnection();
-    const server = http.createServer(app);
-    server.listen(PORT, () => {
-      console.log(`API running on http://localhost:${PORT}`);
-    });
-  } catch (err) {
-    console.error('Failed to start server:', err.message);
-    process.exit(1);
-  }
+    try {
+        await db.testConnection();
+        const server = createServer(app);
+        server.listen(PORT, () => {
+            console.log(`API running on http://localhost:${PORT}`);
+        });
+    } catch (err) {
+        console.error('Failed to start server:', err);
+        process.exit(1);
+    }
 })();

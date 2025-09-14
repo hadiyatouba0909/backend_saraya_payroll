@@ -1,22 +1,21 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
+import express, { json } from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import authRoutes from './routes/auth.js'; // Ajoute .js à la fin
 
-const authRoutes = require('./routes/auth');
-const employeeRoutes = require('./routes/employees');
-const paymentRoutes = require('./routes/payments');
-const settingsRoutes = require('./routes/settings');
-const currencyRoutes = require('./routes/currency');
-const companyRoutes = require('./routes/companies');
+import employeeRoutes from './routes/employees.js';
+import paymentRoutes from './routes/payments.js';
+import settingsRoutes from './routes/settings.js';
+import currencyRoutes from './routes/currency.js';
+import companyRoutes from './routes/companies.js';
 
 const app = express();
 
 const corsOrigin = process.env.CORS_ORIGIN || '*';
 app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(helmet());
-app.use(express.json());
+app.use(json());
 app.use(morgan('dev'));
 
 app.get('/api/health', (req, res) => {
@@ -39,4 +38,4 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
 });
 
-module.exports = app;
+export default app;

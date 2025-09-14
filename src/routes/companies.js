@@ -1,8 +1,10 @@
-const express = require('express');
-const { query } = require('../utils/db');
-const { authRequired } = require('../middleware/auth');
+import { Router } from 'express';
+import db from '../utils/db.js';
+const { query } = db;
+import _default from '../middleware/auth.js';
+const { authRequired } = _default;
 
-const router = express.Router();
+const router = Router();
 
 // Récupérer les informations de l'entreprise de l'utilisateur connecté
 router.get('/', authRequired, async (req, res, next) => {
@@ -148,5 +150,5 @@ router.post('/', authRequired, async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;
 
